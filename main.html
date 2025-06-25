@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Data Vault Interactive Explanation</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top */
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2.5rem;
+            max-width: 90%; /* Responsive width */
+            width: 1200px; /* Max width for larger screens */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #334155; /* Slate-700 */
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0; /* Light gray border */
+            padding-bottom: 0.5rem;
+        }
+        .code-block {
+            background-color: #1e293b; /* Darker slate */
+            color: #f8fafc; /* Lightest slate */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre-wrap; /* Preserve whitespace and wrap */
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            background-color: #f8fafc; /* Lightest slate */
+            border-radius: 0.75rem;
+            overflow: hidden; /* Ensures rounded corners apply */
+        }
+        th, td {
+            border: 1px solid #cbd5e1; /* Slate-300 */
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        th {
+            background-color: #e2e8f0; /* Slate-200 */
+            font-weight: 600;
+            color: #475569; /* Slate-600 */
+        }
+        td {
+            color: #334155; /* Slate-700 */
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .nav-button {
+            background-image: linear-gradient(to right top, #6366f1, #818cf8); /* Indigo gradient */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            background-image: linear-gradient(to right top, #4f46e5, #6366f1);
+        }
+        .nav-button:disabled {
+            background-color: #cbd5e1; /* Slate-300 */
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+        .message-box {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        .message-box.show {
+            display: block;
+        }
+        .close-button {
+            float: right;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #aaa;
+        }
+        .close-button:hover {
+            color: #000;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+            .nav-button {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            th, td {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Raw Data Vault Interactive Explanation</h1>
+            <p class="text-lg text-gray-600">Walk through the process step-by-step.</p>
+        </div>
+
+        <div id="explanation-content" class="min-h-[400px]">
+            <!-- Content will be rendered here by JavaScript -->
+        </div>
+
+        <div class="button-group">
+            <button id="prevBtn" class="nav-button" disabled>Previous</button>
+            <button id="nextBtn" class="nav-button">Next</button>
+        </div>
+    </div>
+
+    <!-- Custom Message Box for alerts -->
+    <div id="messageBox" class="message-box">
+        <span class="close-button" onclick="closeMessageBox()">&times;</span>
+        <p id="messageText"></p>
+    </div>
+
+    <script>
+        // Use crypto.randomUUID() for a more robust unique ID simulation
+        // Simple hash function for demonstration (not cryptographically secure)
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return 'HASH_' + Math.abs(hash).toString(16).toUpperCase();
+        }
+
+        function getCurrentTimestamp() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function showMessageBox(message) {
+            document.getElementById('messageText').innerText = message;
+            document.getElementById('messageBox').classList.add('show');
+        }
+
+        function closeMessageBox() {
+            document.getElementById('messageBox').classList.remove('show');
+        }
+
+        let currentStep = 0;
+
+        const originalJson1 = {
+            "kafka_timestamp": "2025-06-25T10:00:00Z",
+            "submission_id": "SUB001",
+            "submission_date": "2025-06-24",
+            "status": "New",
+            "product_type": "Auto",
+            "quote_id": "QUOTE001",
+            "customer_info": {
+                "name": "Alice",
+                "email": "alice@example.com"
+            },
+            "technical_field_uuid": "abc-123-def-456"
+        };
+
+        const originalJson2_update = {
+            "kafka_timestamp": "2025-06-25T11:30:00Z", // Later timestamp
+            "submission_id": "SUB001",
+            "submission_date": "2025-06-24",
+            "status": "Open", // Changed status
+            "product_type": "Auto",
+            "quote_id": "QUOTE001",
+            "customer_info": {
+                "name": "Alice",
+                "email": "alice@example.com"
+            },
+            "technical_field_uuid": "ghi-789-jkl-012" // Changed technical field
+        };
+
+        let hubTableData = [];
+        let satelliteTableData = [];
+        let linkTableData = [];
+
+        const steps = [
+            {
+                title: "Introduction: Raw Data Vault Process",
+                description: `Welcome to the interactive explanation of Raw Data Vault! We'll explore how data from Kafka messages (represented by JSON files) is transformed into a Raw Data Vault structure.`,
+                content: ""
+            },
+            {
+                title: "Step 1: Data Ingestion - Raw Kafka Message",
+                description: `Imagine receiving a continuous stream of JSON messages from Kafka. Each message represents a submission. Here's our first raw Kafka message, captured in our staging area.`,
+                content: `<p class="text-gray-700 mb-2"><b>Raw Kafka Message (JSON):</b></p><pre class="code-block">${JSON.stringify(originalJson1, null, 2)}</pre>`
+            },
+            {
+                title: "Step 2: Identify Business Key & Hashing for Hub",
+                description: `The first critical step is to identify the **Business Key**. For submissions, 'submission_id' is our unique identifier. We then **hash** this key to create the 'submission_hub_hk' for our Hub table. This hash provides a fixed-length, efficient identifier.`,
+                action: () => {
+                    const submissionId = originalJson1.submission_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    const loadDts = getCurrentTimestamp();
+
+                    if (!hubTableData.some(row => row.submission_hub_hk === submissionHubHk)) {
+                        hubTableData.push({
+                            submission_hub_hk: submissionHubHk,
+                            load_dts: loadDts,
+                            record_src: "Kafka_Submissions"
+                        });
+                    }
+                },
+                content: () => {
+                    const submissionId = originalJson1.submission_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    return `
+                        <p class="text-gray-700 mb-2"><b>Raw Kafka Message (JSON):</b></p>
+                        <pre class="code-block">${JSON.stringify(originalJson1, null, 2).replace(/"submission_id": "SUB001"/, `<span class="bg-yellow-300 text-black font-bold">"submission_id": "SUB001"</span>`)}</pre>
+                        <p class="text-gray-700 mt-4 mb-2">
+                            From <code>"submission_id": "SUB001"</code>, we calculate its hash: <code>${submissionHubHk}</code>.
+                            This is inserted into our Hub_Submission table.
+                        </p>
+                        <p class="text-gray-700 mb-2"><b>Hub_Submission Table:</b></p>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>submission_hub_hk</th>
+                                        <th>load_dts</th>
+                                        <th>record_src</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${hubTableData.map(row => `
+                                        <tr>
+                                            <td>${row.submission_hub_hk}</td>
+                                            <td>${row.load_dts}</td>
+                                            <td>${row.record_src}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            },
+            {
+                title: "Step 3: Flattening JSON & Hashing Attributes (hdiff) for Satellite",
+                description: `We flatten the JSON into a single row, extracting all descriptive (non-technical) attributes. We then concatenate and **hash these attributes** to produce 'submission_s_hdiff'. This hash is our change detection mechanism. The 'kafka_timestamp' is also stored.`,
+                action: () => {
+                    const submissionId = originalJson1.submission_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    const loadDts = getCurrentTimestamp();
+                    const kafkaTimestamp = originalJson1.kafka_timestamp;
+
+                    // Attributes for hdiff (exclude technical and IDs not part of business key for satellite content)
+                    const satelliteAttributes = {
+                        submission_date: originalJson1.submission_date,
+                        status: originalJson1.status,
+                        product_type: originalJson1.product_type,
+                        customer_name: originalJson1.customer_info.name,
+                        customer_email: originalJson1.customer_info.email
+                    };
+                    const hdiffString = JSON.stringify(satelliteAttributes);
+                    const submissionSHdiff = simpleHash(hdiffString);
+
+                    // Add only if hdiff is new or hub_hk is new for the satellite
+                    if (!satelliteTableData.some(row => row.submission_hub_hk === submissionHubHk && row.submission_s_hdiff === submissionSHdiff)) {
+                        satelliteTableData.push({
+                            submission_hub_hk: submissionHubHk,
+                            load_dts: loadDts,
+                            submission_s_hdiff: submissionSHdiff,
+                            submission_date: originalJson1.submission_date,
+                            status: originalJson1.status,
+                            product_type: originalJson1.product_type,
+                            kafka_timestamp: kafkaTimestamp,
+                            customer_name: originalJson1.customer_info.name,
+                            customer_email: originalJson1.customer_info.email
+                        });
+                    }
+                },
+                content: () => {
+                    const submissionId = originalJson1.submission_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    const satelliteAttributes = {
+                        submission_date: originalJson1.submission_date,
+                        status: originalJson1.status,
+                        product_type: originalJson1.product_type,
+                        customer_name: originalJson1.customer_info.name,
+                        customer_email: originalJson1.customer_info.email
+                    };
+                    const hdiffString = JSON.stringify(satelliteAttributes);
+                    const submissionSHdiff = simpleHash(hdiffString);
+
+                    // Highlighted flattened attributes for clarity
+                    const flattenedHtml = `
+                        <p class="text-gray-700 mb-2 mt-4"><b>Flattened Attributes for hdiff calculation:</b></p>
+                        <div class="code-block">
+                            "submission_date": "${originalJson1.submission_date}",<br>
+                            "status": "<span class="bg-yellow-300 text-black font-bold">${originalJson1.status}</span>",<br>
+                            "product_type": "${originalJson1.product_type}",<br>
+                            "customer_name": "${originalJson1.customer_info.name}",<br>
+                            "customer_email": "${originalJson1.customer_info.email}"
+                        </div>
+                        <p class="text-gray-700 mt-4 mb-2">
+                            Concatenating and hashing these produces <code>submission_s_hdiff: ${submissionSHdiff}</code>.
+                        </p>
+                        <p class="text-gray-700 mb-2"><b>Sat_Submission_Details Table:</b></p>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>submission_hub_hk</th>
+                                        <th>load_dts</th>
+                                        <th>submission_s_hdiff</th>
+                                        <th>submission_date</th>
+                                        <th>status</th>
+                                        <th>product_type</th>
+                                        <th>kafka_timestamp</th>
+                                        <th>customer_name</th>
+                                        <th>customer_email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${satelliteTableData.map(row => `
+                                        <tr>
+                                            <td>${row.submission_hub_hk}</td>
+                                            <td>${row.load_dts}</td>
+                                            <td>${row.submission_s_hdiff}</td>
+                                            <td>${row.submission_date}</td>
+                                            <td>${row.status}</td>
+                                            <td>${row.product_type}</td>
+                                            <td>${row.kafka_timestamp.split('T')[0]}</td>
+                                            <td>${row.customer_name}</td>
+                                            <td>${row.customer_email}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    return flattenedHtml;
+                }
+            },
+            {
+                title: "Step 4: Create a Link - Submission to Quote",
+                description: `Relationships between business entities (like a Submission leading to a Quote) are captured in **Link** tables. We identify and hash the business keys of both entities, then hash them together to form a unique 'link_hk'.`,
+                action: () => {
+                    const submissionId = originalJson1.submission_id;
+                    const quoteId = originalJson1.quote_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    const quoteHubHk = simpleHash(quoteId);
+                    const linkHk = simpleHash(`${submissionId}-${quoteId}`);
+                    const loadDts = getCurrentTimestamp();
+
+                    if (!linkTableData.some(row => row.submission_quote_link_hk === linkHk)) {
+                         linkTableData.push({
+                            submission_quote_link_hk: linkHk,
+                            submission_hub_hk: submissionHubHk,
+                            quote_hub_hk: quoteHubHk,
+                            load_dts: loadDts,
+                            record_src: "Kafka_Submissions"
+                        });
+                    }
+                },
+                content: () => {
+                    const submissionId = originalJson1.submission_id;
+                    const quoteId = originalJson1.quote_id;
+                    const linkHk = simpleHash(`${submissionId}-${quoteId}`);
+                    const submissionHubHk = simpleHash(submissionId);
+                    const quoteHubHk = simpleHash(quoteId);
+
+                    return `
+                        <p class="text-gray-700 mb-2"><b>Raw Kafka Message (JSON):</b></p>
+                        <pre class="code-block">${JSON.stringify(originalJson1, null, 2).replace(/"submission_id": "SUB001"/, `<span class="bg-yellow-300 text-black font-bold">"submission_id": "SUB001"</span>`).replace(/"quote_id": "QUOTE001"/, `<span class="bg-yellow-300 text-black font-bold">"quote_id": "QUOTE001"</span>`)}</pre>
+                        <p class="text-gray-700 mt-4 mb-2">
+                            From <code>"submission_id": "${submissionId}"</code> and <code>"quote_id": "${quoteId}"</code>,<br>
+                            we get Hub Keys: <code>${submissionHubHk}</code> and <code>${quoteHubHk}</code>.<br>
+                            These are combined and hashed to form the Link Key: <code>${linkHk}</code>.
+                        </p>
+                        <p class="text-gray-700 mb-2"><b>Link_Submission_Quote Table:</b></p>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>submission_quote_link_hk</th>
+                                        <th>submission_hub_hk</th>
+                                        <th>quote_hub_hk</th>
+                                        <th>load_dts</th>
+                                        <th>record_src</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${linkTableData.map(row => `
+                                        <tr>
+                                            <td>${row.submission_quote_link_hk}</td>
+                                            <td>${row.submission_hub_hk}</td>
+                                            <td>${row.quote_hub_hk}</td>
+                                            <td>${row.load_dts}</td>
+                                            <td>${row.record_src}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            },
+            {
+                title: "Step 5: Handling Data Changes - Simulating an Update",
+                description: `Data is dynamic. Here's a new Kafka message for the *same* 'SUB001', but with an updated 'status' and a *later* 'kafka_timestamp'. This demonstrates how Data Vault handles historical changes.`,
+                content: `<p class="text-gray-700 mb-2"><b>Updated Kafka Message (JSON):</b></p><pre class="code-block">${JSON.stringify(originalJson2_update, null, 2).replace(/"status": "Open"/, `<span class="bg-yellow-300 text-black font-bold">"status": "Open"</span>`).replace(/"2025-06-25T11:30:00Z"/, `<span class="bg-yellow-300 text-black font-bold">"2025-06-25T11:30:00Z"</span>`)}</pre>`
+            },
+            {
+                title: "Step 6: Satellite Update with `hdiff` and `kafka_timestamp`",
+                description: `When the new message's **hdiff** is different and its **kafka_timestamp** is later than any existing record for that Hub Key, a new row is added to the Satellite. This creates an auditable history of changes over time.`,
+                action: () => {
+                    const submissionId = originalJson2_update.submission_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    const loadDts = getCurrentTimestamp();
+                    const kafkaTimestamp = originalJson2_update.kafka_timestamp;
+
+                    const satelliteAttributes = {
+                        submission_date: originalJson2_update.submission_date,
+                        status: originalJson2_update.status,
+                        product_type: originalJson2_update.product_type,
+                        customer_name: originalJson2_update.customer_info.name,
+                        customer_email: originalJson2_update.customer_info.email
+                    };
+                    const hdiffString = JSON.stringify(satelliteAttributes);
+                    const submissionSHdiff = simpleHash(hdiffString);
+
+                    // Check if hdiff is new for this hub_hk
+                    const existingRecord = satelliteTableData.find(row => row.submission_hub_hk === submissionHubHk && row.submission_s_hdiff === submissionSHdiff);
+                    if (!existingRecord) {
+                         // Only add if it's a new hdiff
+                        satelliteTableData.push({
+                            submission_hub_hk: submissionHubHk,
+                            load_dts: loadDts,
+                            submission_s_hdiff: submissionSHdiff,
+                            submission_date: originalJson2_update.submission_date,
+                            status: originalJson2_update.status,
+                            product_type: originalJson2_update.product_type,
+                            kafka_timestamp: kafkaTimestamp,
+                            customer_name: originalJson2_update.customer_info.name,
+                            customer_email: originalJson2_update.customer_info.email
+                        });
+                        // Sort by kafka_timestamp to ensure history is ordered correctly
+                        satelliteTableData.sort((a, b) => new Date(a.kafka_timestamp) - new Date(b.kafka_timestamp));
+                    }
+                },
+                content: () => {
+                    const submissionId = originalJson2_update.submission_id;
+                    const submissionHubHk = simpleHash(submissionId);
+                    const satelliteAttributes = {
+                        submission_date: originalJson2_update.submission_date,
+                        status: originalJson2_update.status,
+                        product_type: originalJson2_update.product_type,
+                        customer_name: originalJson2_update.customer_info.name,
+                        customer_email: originalJson2_update.customer_info.email
+                    };
+                    const hdiffString = JSON.stringify(satelliteAttributes);
+                    const submissionSHdiff = simpleHash(hdiffString);
+
+                    return `
+                        <p class="text-gray-700 mb-2"><b>Updated Kafka Message (JSON):</b></p>
+                        <pre class="code-block">${JSON.stringify(originalJson2_update, null, 2)}</pre>
+                        <p class="text-gray-700 mt-4 mb-2">
+                            The new message for <code>SUB001</code> has a different <span class="font-bold">hdiff</span> (due to status change) and a later <span class="font-bold">kafka_timestamp</span>.<br>
+                            Original hdiff (status "New"): ${simpleHash(JSON.stringify({
+                                submission_date: originalJson1.submission_date,
+                                status: originalJson1.status,
+                                product_type: originalJson1.product_type,
+                                customer_name: originalJson1.customer_info.name,
+                                customer_email: originalJson1.customer_info.email
+                            }))}<br>
+                            New hdiff (status "Open"): ${submissionSHdiff}
+                        </p>
+                        <p class="text-gray-700 mb-2"><b>Sat_Submission_Details Table (with history):</b></p>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>submission_hub_hk</th>
+                                        <th>load_dts</th>
+                                        <th>submission_s_hdiff</th>
+                                        <th>submission_date</th>
+                                        <th>status</th>
+                                        <th>product_type</th>
+                                        <th>kafka_timestamp</th>
+                                        <th>customer_name</th>
+                                        <th>customer_email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${satelliteTableData.map((row, index) => `
+                                        <tr class="${index === satelliteTableData.length - 1 && row.submission_s_hdiff === submissionSHdiff ? 'bg-indigo-100' : ''}">
+                                            <td>${row.submission_hub_hk}</td>
+                                            <td>${row.load_dts}</td>
+                                            <td>${row.submission_s_hdiff}</td>
+                                            <td>${row.submission_date}</td>
+                                            <td>${row.status}</td>
+                                            <td>${row.product_type}</td>
+                                            <td>${row.kafka_timestamp.split('T')[0]}</td>
+                                            <td>${row.customer_name}</td>
+                                            <td>${row.customer_email}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-700 mt-4">The new row (highlighted in light blue) shows the updated status and its associated history, ordered by Kafka timestamp.</p>
+                    `;
+                }
+            },
+            {
+                title: "End of Explanation",
+                description: `You've now seen how Raw Data Vault structures data for scalability, flexibility, and auditable history. Key concepts include:
+                <ul>
+                    <li>**Hubs:** Storing unique business keys.</li>
+                    <li>**Satellites:** Storing descriptive attributes and historical changes via 'hdiff'.</li>
+                    <li>**Links:** Capturing relationships between business keys.</li>
+                    <li>**Kafka Timestamp:** Crucial for ordering and identifying the latest state for a given point in time.</li>
+                </ul>
+                `,
+                content: ""
+            }
+        ];
+
+        function renderStep() {
+            const contentDiv = document.getElementById('explanation-content');
+            const step = steps[currentStep];
+
+            // Clear previous content
+            contentDiv.innerHTML = '';
+
+            // Add title and description
+            contentDiv.innerHTML = `
+                <h2 class="section-title">${step.title}</h2>
+                <p class="text-gray-700 leading-relaxed mb-4">${step.description}</p>
+            `;
+
+            // Add step-specific content, executing content function if it's a function
+            if (typeof step.content === 'function') {
+                contentDiv.innerHTML += step.content();
+            } else {
+                contentDiv.innerHTML += step.content;
+            }
+
+            // Execute action for the step if it exists
+            if (step.action) {
+                step.action();
+            }
+
+            // Update button states
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === steps.length - 1;
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                renderStep();
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentStep > 0) {
+                currentStep--;
+                renderStep();
+            }
+        });
+
+        // Initial render
+        renderStep();
+
+        // Ensure the message box is initialized hidden
+        closeMessageBox();
+    </script>
+</body>
+</html>
